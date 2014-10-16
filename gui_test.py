@@ -19,6 +19,7 @@ class BasicTreeViewExample(object):
         self.Chassis_PSU_Content = dict()
         self.Chassis_FAN_Content = dict()
         self.Chassis_IOM_Content = dict()
+        self.Chassis_IOM_Detail = dict()
 
         # Create a new window
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -31,6 +32,7 @@ class BasicTreeViewExample(object):
 
         self.chassis_inventory_expand(com_content['`show chassis inventory expand`'])
         self.chassis_inventory_detail(com_content['`show chassis inventory detail`'])
+        self.chassis_iom_detail(com_content['`show chassis iom detail`'])
 
         for chassis in range(1, self.chassis_count + 1):
             cha = self.treestore.append(None, ['Chassis %i' % chassis])
@@ -52,8 +54,12 @@ class BasicTreeViewExample(object):
             iom = self.treestore.append(cha, ['IO Modules'])
             for (i,j) in sorted(self.Chassis_IOM_Content[chassis].iteritems(), key=lambda d:d[0]):
                 iom_row = self.treestore.append(iom, [i])
+                iom_status_row = self.treestore.append(iom_row, ['IOM Status'])
+                for x in self.Chassis_IOM_Detail[sorted(self.Chassis_IOM_Detail.keys())[chassis - 1]][i.split()[1]]:
+                    self.treestore.append(iom_status_row, [x])
+                iom_info_row = self.treestore.append(iom_row, ['IOM Info'])
                 for h in j:
-                    self.treestore.append(iom_row, [h])
+                    self.treestore.append(iom_info_row, [h])
 
             # parse PSUs
             psu = self.treestore.append(cha, ['PSUs'])
@@ -194,10 +200,37 @@ class BasicTreeViewExample(object):
         if chassisPrevNum:
             self.Chassis_Detail_Content[chassisPrevNum] = allContent
             chassisPrevNum = ""
-        
+
+    # self.Chassis_IOM_Detail = {'1':{'1':"",'2':""}, '2':{'1':"", '2':""}}
+    def chassis_iom_detail(self, chassis_iom_info):
+        iomDetailPattern = re.compile('^Chassis Id: \d+$')
+        iomIDPattern = re.compile('^ID: \d+$')
+        allContent = list()
+        chassisPrevNum = ""
+        iomPrevNum = ""
+
+        for item in chassis_iom_info:
+            if iomDetailPattern.match(item):
+                if allContent:
+                    self.Chassis_IOM_Detail[chassisPrevNum][iomPrevNum] = allContent
+                if iomDetailPattern.match(item).group().split(":")[1].strip() != chassisPrevNum:
+                    self.Chassis_IOM_Detail[iomDetailPattern.match(item).group().split(":")[1].strip()] = dict()
+                chassisPrevNum = iomDetailPattern.match(item).group().split(":")[1].strip()
+            elif iomIDPattern.match(item):
+                #self.Chassis_IOM_Detail[chassisPrevNum][iomIDPattern.match(item).group().split(":")[1]] = dict()
+                iomPrevNum = iomIDPattern.match(item).group().split(":")[1].strip()
+                allContent = list()
+            elif item:
+                allContent.append(item)
+
+        if iomPrevNum and chassisPrevNum:
+            self.Chassis_IOM_Detail[chassisPrevNum][iomPrevNum] = allContent
+            chassisPrevNum = ""
+            iomPrevNum = ""
+
 pattern1 = re.compile('`.*`')
 pattern2 = re.compile('^`scope .*`')
-f = open("sam_techsupportinfo", "r")
+f = open("logs/sam_techsupportinfo", "r")
 #f = open("log-test", "r")
 
 SCOPE = 0 
