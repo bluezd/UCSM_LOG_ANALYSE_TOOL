@@ -20,6 +20,8 @@ class BasicTreeViewExample(object):
         self.Chassis_FAN_Content = dict()
         self.Chassis_IOM_Content = dict()
         self.Chassis_IOM_Detail = dict()
+        self.Chassis_Server_Detail = dict()
+        self.Server_Status_Detail = dict()
 
         # Create a new window
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -33,6 +35,8 @@ class BasicTreeViewExample(object):
         self.chassis_inventory_expand(com_content['`show chassis inventory expand`'])
         self.chassis_inventory_detail(com_content['`show chassis inventory detail`'])
         self.chassis_iom_detail(com_content['`show chassis iom detail`'])
+        self.server_inventory_expand(com_content['`show server inventory expand`'])
+        self.server_status_detail(com_content['`show server status detail`'])
 
         for chassis in range(1, self.chassis_count + 1):
             cha = self.treestore.append(None, ['Chassis %i' % chassis])
@@ -68,11 +72,22 @@ class BasicTreeViewExample(object):
                 for h in j:
                     self.treestore.append(psu_row, [h])
 
+            # parse Servers
             server = self.treestore.append(cha, ['Servers'])
             for (i,j) in sorted(self.Chassis_Servers_Content[chassis].iteritems(), key=lambda d:d[0]):
                 server_row = self.treestore.append(server, [i])
+                # Server Inventory
+                server_inv_row = self.treestore.append(server_row, ["Server Inventory"])
+                for x in self.Chassis_Server_Detail[sorted(self.Chassis_Server_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]]:
+                    self.treestore.append(server_inv_row, [x])
+                # Server Status
+                server_sts_row = self.treestore.append(server_row, ["Server Status"])
+                for x in self.Server_Status_Detail[sorted(self.Server_Status_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]]:
+                    self.treestore.append(server_sts_row, [x])
+                # Server Information
+                server_info_row = self.treestore.append(server_row, ['Server Info'])
                 for h in j:
-                    self.treestore.append(server_row, [h])
+                    self.treestore.append(server_info_row, [h])
 
         # create the TreeView using treestore
         self.treeview = gtk.TreeView(self.treestore)
@@ -227,6 +242,53 @@ class BasicTreeViewExample(object):
             self.Chassis_IOM_Detail[chassisPrevNum][iomPrevNum] = allContent
             chassisPrevNum = ""
             iomPrevNum = ""
+
+    def server_inventory_expand(self, server_inv_info):
+        """docstring for server_inventory_expand"""
+        serverDetailPattern = re.compile('^Server \d+/\d+:$')
+        allContent = list()
+        serverPrevNum = ""
+        chassisPrevNum = ""
+
+        for item in server_inv_info:
+            if serverDetailPattern.match(item):
+                if allContent:
+                    self.Chassis_Server_Detail[chassisPrevNum][serverPrevNum] = allContent
+                    allContent = list()
+                if serverDetailPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0] != chassisPrevNum:
+                    self.Chassis_Server_Detail[serverDetailPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]] = dict()
+                chassisPrevNum = serverDetailPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]
+                serverPrevNum = serverDetailPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[1]
+            elif item:
+                allContent.append(item)
+
+        if serverPrevNum and chassisPrevNum:
+            self.Chassis_Server_Detail[chassisPrevNum][serverPrevNum] = allContent
+            serverPrevNum = ""
+            chassisPrevNum = ""
+
+    def server_status_detail(self, server_sts_detail):
+        """docstring for server_status_detail"""
+        serverStatusPattern = re.compile('^Server \d+/\d+:$')
+        allContent = list()
+        serverPrevNum = ""
+        chassisPrevNum = ""
+
+        for item in server_sts_detail:
+            if serverStatusPattern.match(item):
+                if allContent:
+                    self.Server_Status_Detail[chassisPrevNum][serverPrevNum] = allContent
+                    allContent = list()
+                if serverStatusPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0] != chassisPrevNum:
+                    self.Server_Status_Detail[serverStatusPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]] = dict()
+                chassisPrevNum = serverStatusPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]
+                serverPrevNum = serverStatusPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[1]
+            elif item:
+                allContent.append(item)
+
+        if serverPrevNum and chassisPrevNum:
+            self.Server_Status_Detail[chassisPrevNum][serverPrevNum] = allContent
+            serverPrevNum = ""
 
 pattern1 = re.compile('`.*`')
 pattern2 = re.compile('^`scope .*`')
