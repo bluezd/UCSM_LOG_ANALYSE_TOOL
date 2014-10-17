@@ -22,6 +22,7 @@ class BasicTreeViewExample(object):
         self.Chassis_IOM_Detail = dict()
         self.Chassis_Server_Detail = dict()
         self.Server_Status_Detail = dict()
+        self.Server_Mem_Detail = dict()
 
         # Create a new window
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -37,6 +38,7 @@ class BasicTreeViewExample(object):
         self.chassis_iom_detail(com_content['`show chassis iom detail`'])
         self.server_inventory_expand(com_content['`show server inventory expand`'])
         self.server_status_detail(com_content['`show server status detail`'])
+        self.server_memory_detail(com_content['`show server memory detail`'])
 
         for chassis in range(1, self.chassis_count + 1):
             cha = self.treestore.append(None, ['Chassis %i' % chassis])
@@ -80,6 +82,10 @@ class BasicTreeViewExample(object):
                 server_inv_row = self.treestore.append(server_row, ["Server Inventory"])
                 for x in self.Chassis_Server_Detail[sorted(self.Chassis_Server_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]]:
                     self.treestore.append(server_inv_row, [x])
+                # Server Memory Information
+                server_mem_row = self.treestore.append(server_row, ["Memory Info"])
+                for x in self.Server_Mem_Detail[sorted(self.Server_Mem_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]]:
+                    self.treestore.append(server_mem_row, [x])
                 # Server Status
                 server_sts_row = self.treestore.append(server_row, ["Server Status"])
                 for x in self.Server_Status_Detail[sorted(self.Server_Status_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]]:
@@ -288,6 +294,29 @@ class BasicTreeViewExample(object):
 
         if serverPrevNum and chassisPrevNum:
             self.Server_Status_Detail[chassisPrevNum][serverPrevNum] = allContent
+            serverPrevNum = ""
+
+    def server_memory_detail(self, server_mem_detail):
+        """docstring for server_memory_detail"""
+        serverMemPattern = re.compile('^Server \d+/\d+:$')
+        allContent = list()
+        serverPrevNum = ""
+        chassisPrevNum = ""
+
+        for item in server_mem_detail:
+            if serverMemPattern.match(item):
+                if allContent:
+                    self.Server_Mem_Detail[chassisPrevNum][serverPrevNum] = allContent
+                    allContent = list()
+                if serverMemPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0] != chassisPrevNum:
+                    self.Server_Mem_Detail[serverMemPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]] = dict()
+                chassisPrevNum = serverMemPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]
+                serverPrevNum = serverMemPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[1]
+            elif item:
+                allContent.append(item)
+
+        if serverPrevNum and chassisPrevNum:
+            self.Server_Mem_Detail[chassisPrevNum][serverPrevNum] = allContent
             serverPrevNum = ""
 
 pattern1 = re.compile('`.*`')
