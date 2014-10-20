@@ -40,6 +40,7 @@ class BasicTreeViewExample(object):
         self.server_status_detail(com_content['`show server status detail`'])
         self.server_memory_detail(com_content['`show server memory detail`'])
 
+        # Display Chassis Information
         for chassis in range(1, self.chassis_count + 1):
             cha = self.treestore.append(None, ['Chassis %i' % chassis])
 
@@ -95,6 +96,9 @@ class BasicTreeViewExample(object):
                 for h in j:
                     self.treestore.append(server_info_row, [h])
 
+        # Display Fabric Interconnect Information
+        #self.fi_inventory_expand(com_content['`show fabric-interconnect inventory expand`'])
+
         # create the TreeView using treestore
         self.treeview = gtk.TreeView(self.treestore)
 
@@ -140,19 +144,19 @@ class BasicTreeViewExample(object):
             if self.RE_Chassis.match(item):
                 self.chassis_count += 1
 
-                serverPattern = re.compile('^Server %s/\d+:$' % self.chassis_count)
+                serverPattern = re.compile('^\s+Server %s/\d+:$' % self.chassis_count)
                 self.Chassis_Servers_Content[self.chassis_count] = dict()
                 serverPrevNum = ""
 
-                psuPattern = re.compile('^PSU \d+:$')
+                psuPattern = re.compile('^\s+PSU \d+:$')
                 self.Chassis_PSU_Content[self.chassis_count] = dict()
                 psuPrevNum = ""
 
-                fanPattern = re.compile('^Tray 1 Module \d+:$')
+                fanPattern = re.compile('^\s+Tray 1 Module \d+:$')
                 self.Chassis_FAN_Content[self.chassis_count] = dict()
                 fanPrevNum = ""
 
-                iomPattern = re.compile('^IOCard \d+:$')
+                iomPattern = re.compile('^\s+IOCard \d+:$')
                 self.Chassis_IOM_Content[self.chassis_count] = dict()
                 iomPrevNum = ""
 
@@ -163,7 +167,7 @@ class BasicTreeViewExample(object):
                     self.Chassis_Servers_Content[self.chassis_count][serverPrevNum] = allContent
                     allContent = list()
 
-                serverPrevNum = serverPattern.match(item).group().split(":")[0]
+                serverPrevNum = serverPattern.match(item).group().split(":")[0].strip()
             elif psuPattern.match(item):
                 if serverPrevNum:
                     self.Chassis_Servers_Content[self.chassis_count][serverPrevNum] = allContent
@@ -174,10 +178,10 @@ class BasicTreeViewExample(object):
                     self.Chassis_PSU_Content[self.chassis_count][psuPrevNum] = allContent
                     allContent = list()
                     
-                psuPrevNum = psuPattern.match(item).group().split(":")[0]
+                psuPrevNum = psuPattern.match(item).group().split(":")[0].strip()
             elif fanPattern.match(item):
                 if psuPrevNum:
-                    self.Chassis_PSU_Content[self.chassis_count][psuPrevNum] = allContent
+                    self.Chassis_PSU_Content[self.chassis_count][psuPrevNum] = allContent[:-1]
                     allContent = list()
                     psuPrevNum = ""
 
@@ -196,8 +200,8 @@ class BasicTreeViewExample(object):
                     self.Chassis_IOM_Content[self.chassis_count][iomPrevNum] = allContent
                     allContent = list()
 
-                iomPrevNum = iomPattern.match(item).group().split(":")[0]
-            elif "Fabric Facing Interfaces:" == item:
+                iomPrevNum = iomPattern.match(item).group().split(":")[0].strip()
+            elif "    Fabric Facing Interfaces:" == item:
                 if iomPrevNum:
                     self.Chassis_IOM_Content[self.chassis_count][iomPrevNum] = allContent
                     allContent = list()
@@ -319,6 +323,11 @@ class BasicTreeViewExample(object):
             self.Server_Mem_Detail[chassisPrevNum][serverPrevNum] = allContent
             serverPrevNum = ""
 
+    #def fi_inventory_expand(self, fi_inv_info):
+    #    """docstring for fi_inventory_expand"""
+    #    fiPattern = re.compile('^[A-Z]$')
+
+
 pattern1 = re.compile('`.*`')
 pattern2 = re.compile('^`scope .*`')
 f = open("logs/sam_techsupportinfo", "r")
@@ -419,43 +428,8 @@ for line in f.readlines():
             content = list()
         prev_com = m1.group()
     else:
-            pass
-            #print line.strip()
-            content.append(line.strip())
-            #content.append(line)
-
-#if prev_com:
-#    com_content[prev_com] = content
-
-#print com_content.keys()
-#for i in com_content:
-#    if isinstance(i, dict):
-#        print i.keys()
-
-#print com_content['`show chassis inventory expand`']
-#print com_content['`show chassis inventory detail`']
-
-#print com_content['`scope monitoring`']['`show mgmt-if-mon-policy`']
-
-
-#print com_content['`scope system`'].keys()
-#print com_content['`scope system`']['`show managed-entity detail`']
-#print com_content['`scope system`']['`scope capability`'].keys()
-#print com_content['`scope system`']['`scope services`'].keys()
-
-
-#print com_content['`scope security`'].keys()
-#print com_content['`scope security`']['`scope radius`'].keys()
-
-#print com_content['`scope eth-server`'].keys()
-#print com_content['`scope eth-server`']['`scope fabric a`'].keys()
-#print com_content['`scope eth-server`']['`scope fabric b`'].keys()
-
-#print com_content['`scope security`'].keys()
-#print com_content['`scope security`']['`scope radius`'].keys()
-#print com_content['`scope eth-server`']['`scope fabric a`'].keys()
-#print com_content['`scope server 1/1`']['`scope adapter 1`'].keys()
-#print com_content['`scope server 1/2`']['`scope adapter 1`'].keys()
+            #content.append(line.strip())
+            content.append(line.rstrip())
 
 def main():
     gtk.main()
