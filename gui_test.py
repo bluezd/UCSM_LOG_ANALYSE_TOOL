@@ -23,11 +23,12 @@ class BasicTreeViewExample(object):
         self.Chassis_Server_Detail = dict()
         self.Server_Status_Detail = dict()
         self.Server_Mem_Detail = dict()
+        self.FI_Inventory_Info = dict()
 
         # Create a new window
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title("Basic TreeView Example")
-        self.window.set_size_request(200, 200)
+        self.window.set_title("UCSM B Series Logs Analysing Tool")
+        self.window.set_size_request(500, 200)
         self.window.connect("delete_event", self.delete_event)
 
         # create a TreeStore with one string column to use as the model
@@ -96,9 +97,17 @@ class BasicTreeViewExample(object):
                 for h in j:
                     self.treestore.append(server_info_row, [h])
 
+        fi = self.treestore.append(None, ['Fabric Interconnects'])
         # Display Fabric Interconnect Information
-        #self.fi_inventory_expand(com_content['`show fabric-interconnect inventory expand`'])
-
+        self.fi_inventory_expand(com_content['`show fabric-interconnect inventory expand`'])
+        for i in sorted(self.FI_Inventory_Info.keys()):
+            fi_row = self.treestore.append(fi, ['Fabric Interconnect %s' % i])
+            for j,h in self.FI_Inventory_Info[i].iteritems():
+                # Fabric Card
+                child_row = self.treestore.append(fi_row, [j])
+                for x in h:
+                    self.treestore.append(child_row, [x])
+                
         # create the TreeView using treestore
         self.treeview = gtk.TreeView(self.treestore)
 
@@ -323,10 +332,34 @@ class BasicTreeViewExample(object):
             self.Server_Mem_Detail[chassisPrevNum][serverPrevNum] = allContent
             serverPrevNum = ""
 
-    #def fi_inventory_expand(self, fi_inv_info):
-    #    """docstring for fi_inventory_expand"""
-    #    fiPattern = re.compile('^[A-Z]$')
+    def fi_inventory_expand(self, fi_inv_info):
+        """docstring for fi_inventory_expand"""
+        fiPattern = re.compile('^[A-Z]:$')
+        contentPattern = re.compile('^\s+\w+.*:$')
+        allContent = list()
+        fiPrevNum = ""
+        contentPrevNum = ""
 
+        for item in fi_inv_info:
+            if contentPattern.match(item):
+                if allContent:
+                    self.FI_Inventory_Info[fiPrevNum][contentPrevNum] = allContent
+                    allContent = list()
+                contentPrevNum = contentPattern.match(item).group().split(":")[0].strip()
+            elif fiPattern.match(item):
+                if allContent:
+                    self.FI_Inventory_Info[fiPrevNum][contentPrevNum] = allContent
+                    allContent = list()
+                if fiPattern.match(item).group().split(":")[0] != fiPrevNum:
+                    self.FI_Inventory_Info[fiPattern.match(item).group().split(":")[0]] = dict()
+                fiPrevNum = fiPattern.match(item).group().split(":")[0]
+            elif item:
+                allContent.append(item)
+
+        if fiPrevNum and contentPrevNum:
+            self.FI_Inventory_Info[fiPrevNum][contentPrevNum] = allContent
+            fiPrevNum = ""
+            contentPrevNum = ""
 
 pattern1 = re.compile('`.*`')
 pattern2 = re.compile('^`scope .*`')
