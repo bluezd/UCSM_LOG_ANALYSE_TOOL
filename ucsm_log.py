@@ -8,7 +8,8 @@ pygtk.require('2.0')
 import gtk
 
 class UCSM_LOG_PARSE(object):
-    def __init__(self, com_content):
+    def __init__(self):
+        print "__init__"
         self.chassis_count = 0
         self.RE_Chassis = re.compile('^Chassis \d+:$')
         self.Chassis_Detail_Content = dict()
@@ -23,90 +24,8 @@ class UCSM_LOG_PARSE(object):
         self.FI_Inventory_Info = dict()
         self.Integrated_Info = dict()
 
-    def __parse_data(self):
-        """docstring for self.__parse_data"""
-        self.chassis_inventory_expand(com_content['`show chassis inventory expand`'])
-        self.chassis_inventory_detail(com_content['`show chassis inventory detail`'])
-        self.chassis_iom_detail(com_content['`show chassis iom detail`'])
-        self.server_inventory_expand(com_content['`show server inventory expand`'])
-        self.server_status_detail(com_content['`show server status detail`'])
-        self.server_memory_detail(com_content['`show server memory detail`'])
-
-        # Display Chassis Information
-        for chassis in range(1, self.chassis_count + 1):
-            Chassis_Name = 'Chassis %i' % chassis
-            cha = self.treestore.append(None, [Chassis_Name])
-            self.Integrated_Info[Chassis_Name] = dict()
-
-            # parse chassis inventory detail
-            self.treestore.append(cha, ['Chassis Detail'])
-            self.Integrated_Info[Chassis_Name]['Chassis Detail'] = self.Chassis_Detail_Content[sorted(self.Chassis_Detail_Content.keys())[chassis - 1]]
-
-            # parse FANS
-            fan = self.treestore.append(cha, ['Fans'])
-            self.Integrated_Info[Chassis_Name]['Fans'] = dict()
-            for (i,j) in sorted(self.Chassis_FAN_Content[chassis].iteritems(), key=lambda d:d[0]):
-                fan_row = self.treestore.append(fan, [i])
-                self.Integrated_Info[Chassis_Name]['Fans'][i] = j
-
-            # parse IOM
-            iom = self.treestore.append(cha, ['IO Modules'])
-            self.Integrated_Info[Chassis_Name]['IO Modules'] = dict()
-            for (i,j) in sorted(self.Chassis_IOM_Content[chassis].iteritems(), key=lambda d:d[0]):
-                iom_row = self.treestore.append(iom, [i])
-                self.Integrated_Info[Chassis_Name]['IO Modules'][i] = dict()
-                iom_status_row = self.treestore.append(iom_row, ['IOM Status'])
-                self.Integrated_Info[Chassis_Name]['IO Modules'][i]['IOM Status'] = self.Chassis_IOM_Detail[sorted(self.Chassis_IOM_Detail.keys())[chassis - 1]][i.split()[1]]
-                iom_info_row = self.treestore.append(iom_row, ['IOM Info'])
-                self.Integrated_Info[Chassis_Name]['IO Modules'][i]['IOM Info'] = j 
-
-            # parse PSUs
-            psu = self.treestore.append(cha, ['PSUs'])
-            self.Integrated_Info[Chassis_Name]['PSUs'] = dict()
-            for (i,j) in sorted(self.Chassis_PSU_Content[chassis].iteritems(), key=lambda d:d[0]):
-                psu_row = self.treestore.append(psu, [i])
-                self.Integrated_Info[Chassis_Name]['PSUs'][i] = j
-
-            # parse Servers
-            server = self.treestore.append(cha, ['Servers'])
-            self.Integrated_Info[Chassis_Name]['Servers'] = dict()
-            for (i,j) in sorted(self.Chassis_Servers_Content[chassis].iteritems(), key=lambda d:d[0]):
-                server_row = self.treestore.append(server, [i])
-                self.Integrated_Info[Chassis_Name]['Servers'][i] = dict() 
-                # Server Inventory
-                server_inv_row = self.treestore.append(server_row, ["Server Inventory"])
-                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Inventory'] = self.Chassis_Server_Detail[sorted(self.Chassis_Server_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]] 
-
-                # Server Memory Information
-                server_mem_row = self.treestore.append(server_row, ["Memory Info"])
-                self.Integrated_Info[Chassis_Name]['Servers'][i]['Memory Info'] = self.Server_Mem_Detail[sorted(self.Server_Mem_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]] 
-
-                # Server Status
-                server_sts_row = self.treestore.append(server_row, ["Server Status"])
-                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Status'] = self.Server_Status_Detail[sorted(self.Server_Status_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]] 
-                #    self.treestore.append(server_sts_row, [x])
-
-                # Server Information
-                server_info_row = self.treestore.append(server_row, ['Server Info'])
-                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Info'] = j 
-
-        fi = self.treestore.append(None, ['Fabric Interconnects'])
-        self.Integrated_Info['Fabric Interconnects'] = dict()
-        # Display Fabric Interconnect Information
-        self.fi_inventory_expand(com_content['`show fabric-interconnect inventory expand`'])
-        for i in sorted(self.FI_Inventory_Info.keys()):
-            FI_NAME = 'Fabric Interconnect %s' % i
-            fi_row = self.treestore.append(fi, [FI_NAME])
-            self.Integrated_Info['Fabric Interconnects'][FI_NAME] = dict()
-
-            for j,h in self.FI_Inventory_Info[i].iteritems():
-                # Fabric Card
-                child_row = self.treestore.append(fi_row, [j])
-                self.Integrated_Info['Fabric Interconnects'][FI_NAME][j] = h 
-                
     def chassis_inventory_expand(self, chassis_inv_list):
         """docstring for chassis_inventory"""
-
         for item in chassis_inv_list: 
             if self.RE_Chassis.match(item):
                 self.chassis_count += 1
@@ -319,115 +238,115 @@ class UCSM_LOG_PARSE(object):
             fiPrevNum = ""
             contentPrevNum = ""
 
-pattern1 = re.compile('`.*`')
-pattern2 = re.compile('^`scope .*`')
-f = open("logs/sam_techsupportinfo", "r")
-#f = open("log-test", "r")
+def ucsm_get_data():
+    """docstring for ucsm_get_data"""
+    pattern1 = re.compile('`.*`')
+    pattern2 = re.compile('^`scope .*`')
+    f = open("logs/sam_techsupportinfo", "r")
 
-SCOPE = 0 
-SCOPE_ING = False
-SCOPE_END_PREV = False
-SCOPE_NEST = False
-content = list()
-com_content = dict()
-prev_com = ""
-First_SCOPE = False
-dup_com = dict()
-dup_com = {'`scope system`':0, '`scope security`':0, '`scope eth-server`':0}
+    SCOPE = 0
+    SCOPE_ING = False
+    SCOPE_END_PREV = False
+    SCOPE_NEST = False
+    content = list()
+    com_content = dict()
+    prev_com = ""
+    First_SCOPE = False
+    dup_com = dict()
+    dup_com = {'`scope system`':0, '`scope security`':0, '`scope eth-server`':0}
 
-for line in f.readlines():
-    m1 = pattern1.match(line.strip()) 
-    m2 = pattern2.match(line.strip()) 
+    for line in f.readlines():
+        m1 = pattern1.match(line.strip())
+        m2 = pattern2.match(line.strip())
 
-    if re.compile('Mgmt Interface Information').match(line.strip()):
-        # scope end
-        if prev_com:
-            if SCOPE > 2:
-                if not pattern2.match(prev_com):
-                    com_content[scope_com_list[0]][scope_com_list[1]][prev_com] = content
-            else:
-                if not pattern2.match(prev_com):
-                    com_content[scope_com_list[0]][prev_com] = content
-            content = list()
-            prev_com = ""
+        if re.compile('Mgmt Interface Information').match(line.strip()):
+            # scope end
+            if prev_com:
+                if SCOPE > 2:
+                    if not pattern2.match(prev_com):
+                        com_content[scope_com_list[0]][scope_com_list[1]][prev_com] = content
+                else:
+                    if not pattern2.match(prev_com):
+                        com_content[scope_com_list[0]][prev_com] = content
+                content = list()
+                prev_com = ""
 
-        SCOPE = 0
-        #print scope_com_list
-        scope_com_list = list()
+            SCOPE = 0
+            #print scope_com_list
+            scope_com_list = list()
 
-    if SCOPE > 0 and m1:
-        if prev_com:
-            if SCOPE > 2:
-                if m2 and not pattern2.match(prev_com) and pattern1.match(prev_com):
-                    SCOPE = 0
-                if len(scope_com_list) == 2:
-                    com_content[scope_com_list[0]][scope_com_list[1]] = dict()
-                    #com_content[scope_com_list[0]][scope_com_list[1]] = dict()
-                    #print "init nest scope"
-                if not pattern2.match(prev_com):
-                    com_content[scope_com_list[0]][scope_com_list[1]][prev_com] = content
-            else:
-                if len(scope_com_list) == 1 :
-                    #print scope_com_list[0], dup_com.keys()
-                    if scope_com_list[0] in dup_com.keys():
-                        if dup_com[scope_com_list[0]] == 0:
+        if SCOPE > 0 and m1:
+            if prev_com:
+                if SCOPE > 2:
+                    if m2 and not pattern2.match(prev_com) and pattern1.match(prev_com):
+                        SCOPE = 0
+                    if len(scope_com_list) == 2:
+                        com_content[scope_com_list[0]][scope_com_list[1]] = dict()
+                        #com_content[scope_com_list[0]][scope_com_list[1]] = dict()
+                        #print "init nest scope"
+                    if not pattern2.match(prev_com):
+                        com_content[scope_com_list[0]][scope_com_list[1]][prev_com] = content
+                else:
+                    if len(scope_com_list) == 1 :
+                        #print scope_com_list[0], dup_com.keys()
+                        if scope_com_list[0] in dup_com.keys():
+                            if dup_com[scope_com_list[0]] == 0:
+                                com_content[scope_com_list[0]] = dict()
+                                dup_com[scope_com_list[0]] = 1
+                        else:
                             com_content[scope_com_list[0]] = dict()
-                            dup_com[scope_com_list[0]] = 1
-                    else:
-                        com_content[scope_com_list[0]] = dict()
 
-                    #com_content[scope_com_list[0]] = dict()
-                if not pattern2.match(prev_com):
-                    com_content[scope_com_list[0]][prev_com] = content
-            content = list()
+                        #com_content[scope_com_list[0]] = dict()
+                    if not pattern2.match(prev_com):
+                        com_content[scope_com_list[0]][prev_com] = content
+                content = list()
 
-            if pattern2.match(prev_com) and pattern2.match(m1.group()): 
-                SCOPE +=1
-            elif m2 and SCOPE > 0:
-                SCOPE -= 1
+                if pattern2.match(prev_com) and pattern2.match(m1.group()):
+                    SCOPE +=1
+                elif m2 and SCOPE > 0:
+                    SCOPE -= 1
 
-        prev_com = m1.group()
+            prev_com = m1.group()
 
-        if m2: 
-            if len(scope_com_list) > 1:
-               # print scope_com_list
-                scope_com_list = list()
+            if m2:
+                if len(scope_com_list) > 1:
+                   # print scope_com_list
+                    scope_com_list = list()
 
-            SCOPE += 1
+                SCOPE += 1
+                scope_com_list.append(m2.group())
+
+            else:
+                scope_com_list.append(m1.group())
+
+        elif m2:
+            scope_com_list = list()
             scope_com_list.append(m2.group())
+            SCOPE += 1
+            if prev_com:
+                #print content
+                com_content[prev_com] = content
+                content = list()
+            #prev_com = ""
+            prev_com = m2.group()
 
+        elif m1:
+            #print line.strip()
+            #if len(content) > 0:
+            if prev_com:
+                #print content
+                com_content[prev_com] = content
+                content = list()
+            prev_com = m1.group()
         else:
-            scope_com_list.append(m1.group())
-
-    elif m2:
-        scope_com_list = list()
-        scope_com_list.append(m2.group())
-        SCOPE += 1
-        if prev_com:
-            #print content
-            com_content[prev_com] = content
-            content = list()
-        #prev_com = "" 
-        prev_com = m2.group() 
-
-    elif m1: 
-        #print line.strip()
-        #if len(content) > 0:
-        if prev_com:
-            #print content
-            com_content[prev_com] = content
-            content = list()
-        prev_com = m1.group()
-    else:
-            #content.append(line.strip())
-            content.append(line.rstrip())
+                #content.append(line.strip())
+                content.append(line.rstrip())
+    f.close()
+    return com_content
 
 def main():
-    gtk.main()
+    com_content = ucsm_get_data()
+    ucsm = UCSM_LOG_PARSE(com_content)
 
 if __name__ == "__main__":
-    #tvexample = BasicTreeViewExample(com_content['`show chassis inventory expand`'])
-    tvexample = UCSM_GUI(com_content)
     main()
-
-f.close()
