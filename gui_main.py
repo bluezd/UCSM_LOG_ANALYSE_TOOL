@@ -2,12 +2,12 @@
 
 import re
 import pygtk
-import gobject 
+import gobject
 import pango
 pygtk.require('2.0')
 import gtk
 
-class BasicTreeViewExample(object):
+class UCSM_GUI(object):
     # close the window and quit
     def delete_event(self, widget, event, data=None):
         gtk.main_quit()
@@ -158,8 +158,6 @@ class BasicTreeViewExample(object):
                 # Fabric Card
                 child_row = self.treestore.append(fi_row, [j])
                 self.Integrated_Info['Fabric Interconnects'][FI_NAME][j] = h 
-                #for x in h:
-                #    self.treestore.append(child_row, [x])
                 
     def __create_treeview(self):
         """docstring for __create_treeview"""
@@ -169,13 +167,7 @@ class BasicTreeViewExample(object):
         self.selection.set_mode(gtk.SELECTION_BROWSE)
         self.treeview.set_size_request(200, -1)
 
-        # parse data
-        #self.__parse_data()
-
-        #self.column = gtk.TreeViewColumn("Cisco UCSM", self.cell,
-        #    text=TITLE_COLUMN, style_set=ITALIC_COLUMN)
-        #    text=0, style_set=0)
-        self.column = gtk.TreeViewColumn("Cisco UCSM")
+        self.column = gtk.TreeViewColumn("Cisco UCSM Log Analysing Tool")
 
         self.treeview.append_column(self.column)
 
@@ -567,7 +559,7 @@ def main():
 
 if __name__ == "__main__":
     #tvexample = BasicTreeViewExample(com_content['`show chassis inventory expand`'])
-    tvexample = BasicTreeViewExample(com_content)
+    tvexample = UCSM_GUI(com_content)
     main()
 
 f.close()
