@@ -9,7 +9,6 @@ import gtk
 
 class UCSM_LOG_PARSE(object):
     def __init__(self):
-        print "__init__"
         self.chassis_count = 0
         self.RE_Chassis = re.compile('^Chassis \d+:$')
         self.Chassis_Detail_Content = dict()
@@ -54,6 +53,7 @@ class UCSM_LOG_PARSE(object):
                     allContent = list()
 
                 serverPrevNum = serverPattern.match(item).group().split(":")[0].strip()
+            # parse psu
             elif psuPattern.match(item):
                 if serverPrevNum:
                     self.Chassis_Servers_Content[self.chassis_count][serverPrevNum] = allContent
@@ -65,6 +65,7 @@ class UCSM_LOG_PARSE(object):
                     allContent = list()
                     
                 psuPrevNum = psuPattern.match(item).group().split(":")[0].strip()
+            # parse fan
             elif fanPattern.match(item):
                 if psuPrevNum:
                     self.Chassis_PSU_Content[self.chassis_count][psuPrevNum] = allContent[:-1]
@@ -76,6 +77,7 @@ class UCSM_LOG_PARSE(object):
                     allContent = list()
                 
                 fanPrevNum = "Fan Module " + "".join(fanPattern.match(item).group().split(":")[0].split()[-1:])
+            # parse iom
             elif iomPattern.match(item):
                 if fanPrevNum:
                     self.Chassis_FAN_Content[self.chassis_count][fanPrevNum] = allContent
@@ -345,8 +347,13 @@ def ucsm_get_data():
     return com_content
 
 def main():
+    # using example
+    com_content = dict()
     com_content = ucsm_get_data()
-    ucsm = UCSM_LOG_PARSE(com_content)
-
+    ucsm = UCSM_LOG_PARSE()
+    ucsm.chassis_inventory_detail(com_content['`show chassis inventory detail`'])
+    for i,j in sorted(ucsm.Chassis_Detail_Content.iteritems(), key=lambda d:d[0]):
+        print i
+        print j
 if __name__ == "__main__":
     main()
