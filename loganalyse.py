@@ -4,6 +4,8 @@ import os
 import re
 import sys
 import tarfile
+from gui_main import UCSM_GUI
+from ucsm_log import UCSM_LOG_PARSE, ucsm_get_data
 
 Primary_FI = ""
 
@@ -20,18 +22,17 @@ def determine_cluster_state(DirPath, fileName):
     f = open(os.path.join(DirPath, fileName), "r")
     for line in f.readlines()[:4]:
         if pattern.match(line.strip()):
-            global Primary_FI
-            Primary_FI = os.path.basename(DirPath) 
+            if os.path.basename(DirPath).find(re.split(':', line.strip())[0]) != -1:
+                global Primary_FI
+                Primary_FI = os.path.basename(DirPath)
             print "FI-%s is the Primary." % re.split(':', line.strip())[0]
     f.close()
 
 def analyse_sam_techsupportinfo(DirPath, fileName):
     """docstring for analyse_sam_techsupportinfo"""
-
-    f = open(os.path.join(DirPath, fileName). "r")
-    for line in f.readlines():
-        # code...
-
+    sam_techsupportinfo = dict()
+    sam_techsupportinfo = ucsm_get_data(os.path.join(DirPath, fileName))
+    return sam_techsupportinfo
 
 def main():
     """docstring for main"""
@@ -57,9 +58,9 @@ def main():
                     determine_cluster_state(fileDirPath, "sam_cluster_state")
 
     print "Analysing the sam_techsupportinfo log"
-    analyse_sam_techsupportinfo(os.path.join(dir, Primary_FI), sam_techsupportinfo)
-
-    print "Analysing the sw_techsupportinfo log"
+    techsupportinfo = analyse_sam_techsupportinfo(os.path.join(dir, Primary_FI), "sam_techsupportinfo")
+    #print "Analysing the sw_techsupportinfo log"
+    UCSM_GUI(techsupportinfo).run()
 
 if __name__ == "__main__":
     main()

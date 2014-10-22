@@ -252,12 +252,10 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         start, end = self.info_buffer.get_bounds()
         self.info_buffer.delete(start, end)
 
-def main():
-    """docstring for main"""
-    gtk.main()
+    def run(self):
+        gtk.main()
 
 if __name__ == "__main__":
     com_content = dict()
     com_content = ucsm_get_data()
-    UCSM_GUI(com_content)
-    main()
+    UCSM_GUI(com_content).run()

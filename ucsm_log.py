@@ -240,11 +240,11 @@ class UCSM_LOG_PARSE(object):
             fiPrevNum = ""
             contentPrevNum = ""
 
-def ucsm_get_data():
+def ucsm_get_data(path = "logs/sam_techsupportinfo"):
     """docstring for ucsm_get_data"""
     pattern1 = re.compile('`.*`')
     pattern2 = re.compile('^`scope .*`')
-    f = open("logs/sam_techsupportinfo", "r")
+    f = open(path, "r")
 
     SCOPE = 0
     SCOPE_ING = False
@@ -355,5 +355,6 @@ def main():
     for i,j in sorted(ucsm.Chassis_Detail_Content.iteritems(), key=lambda d:d[0]):
         print i
         print j
+
 if __name__ == "__main__":
     main()
