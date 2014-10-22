@@ -21,7 +21,7 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         # Create a new window
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title("UCSM B Series Logs Analysing Tool")
-        self.window.set_size_request(500, 200)
+        self.window.set_size_request(800, 800)
         self.window.connect("delete_event", self.delete_event)
 
         self.hbox = gtk.HBox(False, 3)
@@ -35,8 +35,28 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         
         self.scrolled_window, self.info_buffer = self.__create_text(False)
         self._new_notebook_page(self.scrolled_window, '_Info')
-        self.tag = self.info_buffer.create_tag('title')
-        self.tag.set_property('font', 'Sans 18')
+        #self.tag = self.info_buffer.create_tag('title')
+        #self.tag.set_property('font', 'Sans 18')
+
+        #self.tag = self.info_buffer.create_tag('good', foreground='#00007F',
+        #    weight=pango.WEIGHT_BOLD)
+        self.tag = self.info_buffer.create_tag('good', foreground='#007F00',
+            style=pango.STYLE_ITALIC)
+        self.tag.set_property('font', 'monospace')
+        self.tag = self.info_buffer.create_tag('bad', foreground='#7F007F',
+            style=pango.STYLE_ITALIC)
+
+        #scrolled_window, self.info_buffer = self.__create_text(True)
+        #self._new_notebook_page(scrolled_window, '_Source')
+        #tag = self.info_buffer.create_tag('source')
+        #tag.set_property('font', 'monospace')
+        #tag.set_property('pixels_above_lines', 0)
+        #tag.set_property('pixels_below_lines', 0)
+        #tag = self.info_buffer.create_tag('keyword', foreground='#00007F',
+        #    weight=pango.WEIGHT_BOLD)
+        #tag = self.info_buffer.create_tag('string', foreground='#7F007F')
+        #tag = self.info_buffer.create_tag('comment', foreground='#007F00',
+        #    style=pango.STYLE_ITALIC)
 
         #self.scrolledwindow = gtk.ScrolledWindow()
         #self.scrolledwindow.add(self.treeview)
@@ -218,7 +238,14 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         #    buffer.insert(iter, '\n')
 
         for line in lines: 
-            buffer.insert(iter, line)
+            if line.find("Overall Status:") != -1:
+                buffer.insert(iter, line.split(":")[0]+":")
+                if line.split(":")[1].strip() and line.split(":")[1].strip() != "Operable":
+                    buffer.insert_with_tags_by_name(iter, line.split(":")[1], 'bad')
+                else:
+                    buffer.insert_with_tags_by_name(iter, line.split(":")[1], 'good')
+            else:
+                buffer.insert(iter, line)
             buffer.insert(iter, '\n')
 
     def clear_buffers(self):
