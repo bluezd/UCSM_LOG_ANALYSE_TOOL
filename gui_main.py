@@ -17,6 +17,7 @@ class UCSM_GUI(UCSM_LOG_PARSE):
     def __init__(self, com_content):
         #UCSM_LOG_PARSE.__init__(self)
         super(UCSM_GUI, self).__init__()
+        self.com_content = com_content
 
         # Create a new window
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -89,12 +90,12 @@ class UCSM_GUI(UCSM_LOG_PARSE):
 
     def __parse_data(self):
         """docstring for self.__parse_data"""
-        self.chassis_inventory_expand(com_content['`show chassis inventory expand`'])
-        self.chassis_inventory_detail(com_content['`show chassis inventory detail`'])
-        self.chassis_iom_detail(com_content['`show chassis iom detail`'])
-        self.server_inventory_expand(com_content['`show server inventory expand`'])
-        self.server_status_detail(com_content['`show server status detail`'])
-        self.server_memory_detail(com_content['`show server memory detail`'])
+        self.chassis_inventory_expand(self.com_content['`show chassis inventory expand`'])
+        self.chassis_inventory_detail(self.com_content['`show chassis inventory detail`'])
+        self.chassis_iom_detail(self.com_content['`show chassis iom detail`'])
+        self.server_inventory_expand(self.com_content['`show server inventory expand`'])
+        self.server_status_detail(self.com_content['`show server status detail`'])
+        self.server_memory_detail(self.com_content['`show server memory detail`'])
 
         # Display Chassis Information
         for chassis in range(1, self.chassis_count + 1):

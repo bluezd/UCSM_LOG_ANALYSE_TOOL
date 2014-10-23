@@ -240,7 +240,8 @@ class UCSM_LOG_PARSE(object):
             fiPrevNum = ""
             contentPrevNum = ""
 
-def ucsm_get_data(path = "logs/sam_techsupportinfo"):
+#def ucsm_get_data(path = "logs/sam_techsupportinfo"):
+def ucsm_get_data(path = "sam_techsupportinfo"):
     """docstring for ucsm_get_data"""
     pattern1 = re.compile('`.*`')
     pattern2 = re.compile('^`scope .*`')
@@ -255,18 +256,22 @@ def ucsm_get_data(path = "logs/sam_techsupportinfo"):
     prev_com = ""
     First_SCOPE = False
     dup_com = dict()
-    dup_com = {'`scope system`':0, '`scope security`':0, '`scope eth-server`':0}
+    dup_com = {'`scope system`':0, '`scope vm-mgmt`':0, '`scope security`':0, '`scope eth-server`':0}
+    SCOPE_Third = False
 
     for line in f.readlines():
         m1 = pattern1.match(line.strip())
         m2 = pattern2.match(line.strip())
 
-        if re.compile('Mgmt Interface Information').match(line.strip()):
+        if re.compile('Server Interface Information').match(line.strip()) or re.compile('.*MgmtIf Information$').match(line.strip()) or re.compile('Server Interface Information').match(line.strip()):
             # scope end
             if prev_com:
                 if SCOPE > 2:
                     if not pattern2.match(prev_com):
                         com_content[scope_com_list[0]][scope_com_list[1]][prev_com] = content
+                elif SCOPE > 3:
+                    if not pattern2.match(prev_com):
+                        com_content[scope_com_list[0]][scope_com_list[1]][scope_com_list[2]][prev_com] = content
                 else:
                     if not pattern2.match(prev_com):
                         com_content[scope_com_list[0]][prev_com] = content
@@ -283,11 +288,30 @@ def ucsm_get_data(path = "logs/sam_techsupportinfo"):
                     if m2 and not pattern2.match(prev_com) and pattern1.match(prev_com):
                         SCOPE = 0
                     if len(scope_com_list) == 2:
-                        com_content[scope_com_list[0]][scope_com_list[1]] = dict()
-                        #com_content[scope_com_list[0]][scope_com_list[1]] = dict()
+                        if scope_com_list[1] in dup_com.keys():
+                            if dup_com[scope_com_list[1]] == 0:
+                                com_content[scope_com_list[0]][scope_com_list[1]] = dict()
+                                dup_com[scope_com_list[1]] = 1
+                        else:
+                            try:
+                                com_content[scope_com_list[0]][scope_com_list[1]] = dict()
+                            except Exception, e:
+                                print "#### Error ####"
+                                print scope_com_list[0]
+                                print scope_com_list[1]
+                                print m1.group()
+                                print scope_com_list
+                    elif len(scope_com_list) == 3 and pattern2.match(prev_com):
+                        com_content[scope_com_list[0]][scope_com_list[1]][scope_com_list[2]] = dict()
+                        SCOPE_Third = True
                         #print "init nest scope"
                     if not pattern2.match(prev_com):
-                        com_content[scope_com_list[0]][scope_com_list[1]][prev_com] = content
+                        if SCOPE_Third:
+                            com_content[scope_com_list[0]][scope_com_list[1]][scope_com_list[2]][prev_com] = content
+                            if m2 and not pattern2.match(prev_com) and pattern1.match(prev_com):
+                                SCOPE_Third = False
+                        else:
+                            com_content[scope_com_list[0]][scope_com_list[1]][prev_com] = content
                 else:
                     if len(scope_com_list) == 1 :
                         #print scope_com_list[0], dup_com.keys()
@@ -312,12 +336,14 @@ def ucsm_get_data(path = "logs/sam_techsupportinfo"):
 
             if m2:
                 if len(scope_com_list) > 1:
+                    if pattern2.match(scope_com_list[0]) and pattern2.match(scope_com_list[1]) and SCOPE > 1:
+                        pass
+                    else:
+                        scope_com_list = list()
                    # print scope_com_list
-                    scope_com_list = list()
 
                 SCOPE += 1
                 scope_com_list.append(m2.group())
-
             else:
                 scope_com_list.append(m1.group())
 
