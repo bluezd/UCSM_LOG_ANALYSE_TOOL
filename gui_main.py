@@ -135,7 +135,9 @@ class UCSM_GUI(UCSM_LOG_PARSE):
             # parse Servers
             server = self.treestore.append(cha, ['Servers'])
             self.Integrated_Info[Chassis_Name]['Servers'] = dict()
-            for (i,j) in sorted(self.Chassis_Servers_Content[chassis].iteritems(), key=lambda d:d[0]):
+            #for (i,j) in sorted(self.Chassis_Servers_Content[chassis].iteritems(), key=lambda d:d[0]):
+            for i in self.Server_Mem_Detail[sorted(self.Server_Mem_Detail.keys())[chassis - 1]].keys():
+                i = "Server " + '/'.join(str(chassis)+i)
                 server_row = self.treestore.append(server, [i])
                 self.Integrated_Info[Chassis_Name]['Servers'][i] = dict() 
                 # Server Inventory
@@ -153,7 +155,8 @@ class UCSM_GUI(UCSM_LOG_PARSE):
 
                 # Server Information
                 server_info_row = self.treestore.append(server_row, ['Server Info'])
-                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Info'] = j 
+                #self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Info'] = j
+                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Info'] = self.Chassis_Servers_Content[chassis][i] 
 
         fi = self.treestore.append(None, ['Fabric Interconnects'])
         self.Integrated_Info['Fabric Interconnects'] = dict()
