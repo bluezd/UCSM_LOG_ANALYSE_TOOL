@@ -161,7 +161,7 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         fi = self.treestore.append(None, ['Fabric Interconnects'])
         self.Integrated_Info['Fabric Interconnects'] = dict()
         # Display Fabric Interconnect Information
-        self.fi_inventory_expand(com_content['`show fabric-interconnect inventory expand`'])
+        self.fi_inventory_expand(self.com_content['`show fabric-interconnect inventory expand`'])
         for i in sorted(self.FI_Inventory_Info.keys()):
             FI_NAME = 'Fabric Interconnect %s' % i
             fi_row = self.treestore.append(fi, [FI_NAME])
