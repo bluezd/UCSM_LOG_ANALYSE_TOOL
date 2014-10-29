@@ -30,6 +30,12 @@ class UCSM_GUI(UCSM_LOG_PARSE):
 
         self.treeview = self.__create_treeview()
         self.hbox.pack_start(self.treeview, False, False)
+
+        #scrolled_window = gtk.ScrolledWindow()
+        #scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        #scrolled_window.set_shadow_type(gtk.SHADOW_IN)
+        ##scrolled_window.add(self.treeview)
+        #self.window.add(scrolled_window)
         
         self.notebook = gtk.Notebook()
         self.hbox.pack_start(self.notebook, expand=True)
