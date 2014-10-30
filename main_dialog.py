@@ -45,7 +45,7 @@ class Main_Dialog_Window(gtk.Window):
         self.button_entry[button] = self.entry1
 
         button1 = gtk.Button("Analyze")
-        button1.connect('clicked', self.tarFileanalyze)
+        button1.connect('clicked', self.tar_UCSM_analyze)
         hbox.pack_start(button1, False, False, 0)
         self.button_entry[button1] = self.entry1
 
@@ -67,7 +67,7 @@ class Main_Dialog_Window(gtk.Window):
         self.button_entry[button2] = self.entry2
 
         button3 = gtk.Button("Analyze")
-        button3.connect('clicked', self.tarFileanalyze)
+        button3.connect('clicked', self.tar_Chassis_analyze)
         hbox1.pack_start(button3, False, False, 0)
         self.button_entry[button3] = self.entry2
 
@@ -109,13 +109,45 @@ class Main_Dialog_Window(gtk.Window):
             print 'Closed, no files selected'
         dialog.destroy()
 
-    def tarFileanalyze(self, button):
+    def tar_UCSM_analyze(self, button):
         """docstring for analyze"""
         if self.button_entry[button].get_text():
             #print self.button_entry[button].get_text()
             self.analyse.run(self.button_entry[button].get_text())
         else:
-            pass
+            self.warning()
+
+    def tar_Chassis_analyze(self, button):
+        """docstring for tar_Chassis_analyze"""
+        if self.button_entry[button].get_text():
+            print "## Not implement yet ##"
+        else:
+            self.warning()
+
+    def warning(self):
+        dialog = gtk.Dialog("Warning", self, 0,
+                (gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+        hbox = gtk.HBox(False, 8)
+        hbox.set_border_width(8)
+        dialog.vbox.pack_start(hbox, False, False, 0)
+
+        stock = gtk.image_new_from_stock(
+                gtk.STOCK_DIALOG_WARNING,
+                gtk.ICON_SIZE_DIALOG)
+        hbox.pack_start(stock, False, False, 0)
+
+        warn_label = gtk.Label('Please choose the file first !')
+        #hbox.pack_start(warn_label, False, False, 0)
+        calign=gtk.Alignment(1,1,1,1)
+        calign.add(warn_label)
+        hbox.pack_start(calign, False, False, 0)
+
+        dialog.show_all()
+
+        response = dialog.run()
+        if response == gtk.RESPONSE_OK:
+            dialog.destroy()
 
     def run(self):
         """docstring for run"""
