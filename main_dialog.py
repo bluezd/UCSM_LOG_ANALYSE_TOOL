@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import pygtk
 pygtk.require('2.0')
 import gtk
@@ -9,6 +10,8 @@ class Main_Dialog_Window(gtk.Window):
     def __init__(self, parent=None, analyse=None):
         # Create the toplevel window
         self.analyse = analyse
+        self.IMAGEDIR = os.path.join(os.path.dirname(__file__), 'images')
+        self.BUDDY_IMAGE = os.path.join(self.IMAGEDIR, 'ciscologo.gif')
         gtk.Window.__init__(self)
         try:
             self.set_screen(parent.get_screen())
@@ -18,16 +21,38 @@ class Main_Dialog_Window(gtk.Window):
         self.set_title(self.__class__.__name__)
         self.set_border_width(8)
 
-        frame = gtk.Frame("Cisco UCSM log analysing")
+        frame = gtk.Frame()
         self.add(frame)
 
         vbox = gtk.VBox(False, 8)
         vbox.set_border_width(8)
         frame.add(vbox)
 
+        #vbox = gtk.VBox(False, 8)
+        #vbox.set_border_width(8)
+        #self.add(vbox)
+
+        label = gtk.Label()
+        label.set_markup("<span font_desc=\"Sans 25\" foreground=\"black\" size=\"x-large\"> Cisco UCS Log Analysing Tool</span>")
+        vbox.pack_start(label, False, False, 0)
+
+        #frame = gtk.Frame()
+        #frame.set_shadow_type(gtk.SHADOW_IN)
+
+        image = gtk.Image()
+        image.set_from_file(self.BUDDY_IMAGE)
+
+        align = gtk.Alignment(0.5, 0.5, 0, 0)
+        #align.add(frame)
+        align.add(image)
+        vbox.pack_start(align, False, False, 0)
+
+        #image = gtk.Image()
+        #image.set_from_file(self.BUDDY_IMAGE)
+        #frame.add(image)
+
         self.button_entry = dict()
 
-        # Interactive dialog
         hbox = gtk.HBox(False, 8)
 
         button = gtk.Button("Browse Files")
@@ -137,7 +162,7 @@ class Main_Dialog_Window(gtk.Window):
                 gtk.ICON_SIZE_DIALOG)
         hbox.pack_start(stock, False, False, 0)
 
-        warn_label = gtk.Label('Please choose the file first !')
+        warn_label = gtk.Label("Please choose the file first !")
         #hbox.pack_start(warn_label, False, False, 0)
         calign=gtk.Alignment(1,1,1,1)
         calign.add(warn_label)

@@ -37,12 +37,19 @@ class Analyse_Logs(object):
         """docstring for main"""
         #print "Please specifiy the UCSM log path:"
         dir = tarfilePath.split(".")[0]
+        #dir = os.path.dirname(tarfilePath)
         if tarfile.is_tarfile(tarfilePath):
             if os.path.isdir(dir):
                 print "deleting the existing dir %s" % dir
                 shutil.rmtree(dir)
             tar = tarfile.open(tarfilePath)
-            tar.extractall()
+            for member in tar.getmembers():
+                if member.isreg():
+                    tar_dir = dir
+                    if not os.path.isdir(tar_dir):
+                        os.mkdir(tar_dir)
+                    member.name = os.path.basename(member.name)
+                    tar.extract(member, tar_dir)
             tar.close()
         if os.path.isdir(dir):
             for fileName in os.listdir(dir):
