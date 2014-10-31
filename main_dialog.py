@@ -10,8 +10,8 @@ class Main_Dialog_Window(gtk.Window):
     def __init__(self, parent=None, analyse=None):
         # Create the toplevel window
         self.analyse = analyse
-        self.IMAGEDIR = os.path.join(os.path.dirname(__file__), 'images')
-        self.BUDDY_IMAGE = os.path.join(self.IMAGEDIR, 'ciscologo.gif')
+        self.IMAGEDIR = os.path.join(os.path.dirname(__file__), 'lib/images')
+        self.Cisco_Image = os.path.join(self.IMAGEDIR, 'ciscologo.gif')
         gtk.Window.__init__(self)
         try:
             self.set_screen(parent.get_screen())
@@ -40,7 +40,7 @@ class Main_Dialog_Window(gtk.Window):
         #frame.set_shadow_type(gtk.SHADOW_IN)
 
         image = gtk.Image()
-        image.set_from_file(self.BUDDY_IMAGE)
+        image.set_from_file(self.Cisco_Image)
 
         align = gtk.Alignment(0.5, 0.5, 0, 0)
         #align.add(frame)
@@ -48,7 +48,7 @@ class Main_Dialog_Window(gtk.Window):
         vbox.pack_start(align, False, False, 0)
 
         #image = gtk.Image()
-        #image.set_from_file(self.BUDDY_IMAGE)
+        #image.set_from_file(self.Cisco_Image)
         #frame.add(image)
 
         self.button_entry = dict()

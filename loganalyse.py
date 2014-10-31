@@ -22,9 +22,8 @@ class Analyse_Logs(object):
         for line in f.readlines()[:4]:
             if pattern.match(line.strip()):
                 if os.path.basename(DirPath).find(re.split(':', line.strip())[0]) != -1:
-                    #global Primary_FI
                     self.Primary_FI = os.path.basename(DirPath)
-                print "FI-%s is the Primary." % re.split(':', line.strip())[0]
+                    print "FI-%s is the Primary." % re.split(':', line.strip())[0]
         f.close()
 
     def analyse_sam_techsupportinfo(self, DirPath, fileName):
@@ -67,7 +66,6 @@ class Analyse_Logs(object):
 
         print "Analysing the sam_techsupportinfo log"
         techsupportinfo = self.analyse_sam_techsupportinfo(os.path.join(dir, self.Primary_FI), "sam_techsupportinfo")
-        #print "Analysing the sw_techsupportinfo log"
         UCSM_GUI(techsupportinfo).run()
 
 def usage():
