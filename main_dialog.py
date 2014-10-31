@@ -109,10 +109,17 @@ class Main_Dialog_Window(gtk.Window):
         dialog.set_default_response(gtk.RESPONSE_OK)
         
         filter = gtk.FileFilter()
+        filter.set_name("Tar files")
+        filter.add_pattern("*.tar")
+        filter.add_pattern("*.rar")
+        filter.add_pattern("*.tar.gz")
+        dialog.add_filter(filter)
+
+        filter = gtk.FileFilter()
         filter.set_name("All files")
         filter.add_pattern("*")
         dialog.add_filter(filter)
-        
+
         filter = gtk.FileFilter()
         filter.set_name("Images")
         filter.add_mime_type("image/png")
