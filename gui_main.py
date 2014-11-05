@@ -25,23 +25,22 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         self.window.set_size_request(800, 800)
         self.window.connect("delete_event", self.delete_event)
 
-        self.hbox = gtk.HBox(False, 3)
-        self.window.add(self.hbox)
+        self.hpaned = gtk.HPaned()
+        self.window.add(self.hpaned)
+
+        self.scrolled_window1 = gtk.ScrolledWindow()
+        self.scrolled_window1.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.scrolled_window1.set_shadow_type(gtk.SHADOW_IN)
+        self.hpaned.add(self.scrolled_window1)
 
         self.treeview = self.__create_treeview()
-        self.hbox.pack_start(self.treeview, False, False)
-
-        #scrolled_window = gtk.ScrolledWindow()
-        #scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        #scrolled_window.set_shadow_type(gtk.SHADOW_IN)
-        ##scrolled_window.add(self.treeview)
-        #self.window.add(scrolled_window)
+        self.scrolled_window1.add(self.treeview)
         
         self.notebook = gtk.Notebook()
-        self.hbox.pack_start(self.notebook, expand=True)
+        self.hpaned.add(self.notebook)
         
-        self.scrolled_window, self.info_buffer = self.__create_text(False)
-        self._new_notebook_page(self.scrolled_window, '_Info')
+        self.scrolled_window2, self.info_buffer = self.__create_text(False)
+        self._new_notebook_page(self.scrolled_window2, '_Info')
         #self.tag = self.info_buffer.create_tag('title')
         #self.tag.set_property('font', 'Sans 18')
 
@@ -78,12 +77,12 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         self.notebook.append_page(widget, l)
 
     def __create_text(self, is_source=False):
-        self.scrolled_window = gtk.ScrolledWindow()
-        self.scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.scrolled_window.set_shadow_type(gtk.SHADOW_IN)
+        scrolled_window = gtk.ScrolledWindow()
+        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        scrolled_window.set_shadow_type(gtk.SHADOW_IN)
 
         self.text_view = gtk.TextView()
-        self.scrolled_window.add(self.text_view)
+        scrolled_window.add(self.text_view)
 
         self.buffer = gtk.TextBuffer(None)
         self.text_view.set_buffer(self.buffer)
@@ -92,7 +91,7 @@ class UCSM_GUI(UCSM_LOG_PARSE):
 
         self.text_view.set_wrap_mode(not is_source)
 
-        return self.scrolled_window, self.buffer
+        return scrolled_window, self.buffer
 
     def __parse_data(self):
         """docstring for self.__parse_data"""
