@@ -4,7 +4,7 @@ import os
 import pygtk
 pygtk.require('2.0')
 import gtk
-from loganalyse import Analyse_Logs 
+from lib.main import Analyse_Logs
 
 class Main_Dialog_Window(gtk.Window):
     def __init__(self, parent=None, analyse=None):

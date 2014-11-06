@@ -5,8 +5,8 @@ import re
 import sys
 import tarfile
 import shutil
-from gui_main import UCSM_GUI
-from ucsm_log import UCSM_LOG_PARSE, ucsm_get_data
+from lib.ui import UCSM_GUI
+from lib.ucsm_log_parse import UCSM_LOG_PARSE, ucsm_get_data
 
 class Analyse_Logs(object):
     """docstring for Analyse_Logs"""

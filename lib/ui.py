@@ -6,7 +6,7 @@ import gobject
 import pango
 pygtk.require('2.0')
 import gtk
-from ucsm_log import UCSM_LOG_PARSE, ucsm_get_data
+from lib.ucsm_log_parse import UCSM_LOG_PARSE, ucsm_get_data
 
 class UCSM_GUI(UCSM_LOG_PARSE):
     # close the window and quit
