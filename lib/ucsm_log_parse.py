@@ -9,7 +9,7 @@ import gtk
 
 class UCSM_LOG_PARSE(object):
     def __init__(self):
-        self.chassis_count = 0
+        self.chassis_num = list()
         self.RE_Chassis = re.compile('^Chassis \d+:$')
         self.Chassis_Detail_Content = dict()
         self.Chassis_Servers_Content = dict()
@@ -27,71 +27,72 @@ class UCSM_LOG_PARSE(object):
         """docstring for chassis_inventory"""
         for item in chassis_inv_list: 
             if self.RE_Chassis.match(item):
-                self.chassis_count += 1
+                chassis_number = filter(str.isdigit, item)
+                self.chassis_num.append(chassis_number)
 
-                serverPattern = re.compile('^\s+Server %s/\d+:$' % self.chassis_count)
-                self.Chassis_Servers_Content[self.chassis_count] = dict()
+                serverPattern = re.compile('^\s+Server %s/\d+:$' % chassis_number)
+                self.Chassis_Servers_Content[chassis_number] = dict()
                 serverPrevNum = ""
 
                 psuPattern = re.compile('^\s+PSU \d+:$')
-                self.Chassis_PSU_Content[self.chassis_count] = dict()
+                self.Chassis_PSU_Content[chassis_number] = dict()
                 psuPrevNum = ""
 
                 fanPattern = re.compile('^\s+Tray 1 Module \d+:$')
-                self.Chassis_FAN_Content[self.chassis_count] = dict()
+                self.Chassis_FAN_Content[chassis_number] = dict()
                 fanPrevNum = ""
 
                 iomPattern = re.compile('^\s+IOCard \d+:$')
-                self.Chassis_IOM_Content[self.chassis_count] = dict()
+                self.Chassis_IOM_Content[chassis_number] = dict()
                 iomPrevNum = ""
 
                 allContent = list()
             # parse servers
             elif serverPattern.match(item):
                 if serverPrevNum:
-                    self.Chassis_Servers_Content[self.chassis_count][serverPrevNum] = allContent
+                    self.Chassis_Servers_Content[chassis_number][serverPrevNum] = allContent
                     allContent = list()
 
-                serverPrevNum = serverPattern.match(item).group().split(":")[0].strip()
+                serverPrevNum = serverPattern.match(item).group().strip().rstrip(':').split(' ')[1]
             # parse psu
             elif psuPattern.match(item):
                 if serverPrevNum:
-                    self.Chassis_Servers_Content[self.chassis_count][serverPrevNum] = allContent
+                    self.Chassis_Servers_Content[chassis_number][serverPrevNum] = allContent
                     allContent = list()
                     serverPrevNum = ""
 
                 if psuPrevNum:
-                    self.Chassis_PSU_Content[self.chassis_count][psuPrevNum] = allContent
+                    self.Chassis_PSU_Content[chassis_number][psuPrevNum] = allContent
                     allContent = list()
                     
                 psuPrevNum = psuPattern.match(item).group().split(":")[0].strip()
             # parse fan
             elif fanPattern.match(item):
                 if psuPrevNum:
-                    self.Chassis_PSU_Content[self.chassis_count][psuPrevNum] = allContent[:-1]
+                    self.Chassis_PSU_Content[chassis_number][psuPrevNum] = allContent[:-1]
                     allContent = list()
                     psuPrevNum = ""
 
                 if fanPrevNum:
-                    self.Chassis_FAN_Content[self.chassis_count][fanPrevNum] = allContent
+                    self.Chassis_FAN_Content[chassis_number][fanPrevNum] = allContent
                     allContent = list()
                 
                 fanPrevNum = "Fan Module " + "".join(fanPattern.match(item).group().split(":")[0].split()[-1:])
             # parse iom
             elif iomPattern.match(item):
                 if fanPrevNum:
-                    self.Chassis_FAN_Content[self.chassis_count][fanPrevNum] = allContent
+                    self.Chassis_FAN_Content[chassis_number][fanPrevNum] = allContent
                     allContent = list()
                     fanPrevNum = ""
 
                 if iomPrevNum:
-                    self.Chassis_IOM_Content[self.chassis_count][iomPrevNum] = allContent
+                    self.Chassis_IOM_Content[chassis_number][iomPrevNum] = allContent
                     allContent = list()
 
                 iomPrevNum = iomPattern.match(item).group().split(":")[0].strip()
             elif "    Fabric Facing Interfaces:" == item:
                 if iomPrevNum:
-                    self.Chassis_IOM_Content[self.chassis_count][iomPrevNum] = allContent
+                    self.Chassis_IOM_Content[chassis_number][iomPrevNum] = allContent
                     allContent = list()
                     iomPrevNum = ""
             elif item:
@@ -106,7 +107,7 @@ class UCSM_LOG_PARSE(object):
                     self.Chassis_Detail_Content[chassisPrevNum] = allContent
                 self.Chassis_Detail_Content[self.RE_Chassis.match(item).group().split(":")[0]] = dict()
                 allContent = list()
-                chassisPrevNum = self.RE_Chassis.match(item).group().split(":")[0]
+                chassisPrevNum = filter(str.isdigit, self.RE_Chassis.match(item).group())
             elif item:
                 allContent.append(item) 
 
@@ -156,7 +157,7 @@ class UCSM_LOG_PARSE(object):
                 if serverDetailPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0] != chassisPrevNum:
                     self.Chassis_Server_Detail[serverDetailPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]] = dict()
                 chassisPrevNum = serverDetailPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]
-                serverPrevNum = serverDetailPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[1]
+                serverPrevNum = serverDetailPattern.match(item).group().rstrip(':').split(' ')[1]
             elif item:
                 allContent.append(item)
 
@@ -180,7 +181,7 @@ class UCSM_LOG_PARSE(object):
                 if serverStatusPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0] != chassisPrevNum:
                     self.Server_Status_Detail[serverStatusPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]] = dict()
                 chassisPrevNum = serverStatusPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]
-                serverPrevNum = serverStatusPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[1]
+                serverPrevNum = serverStatusPattern.match(item).group().rstrip(':').split(' ')[1]
             elif item:
                 allContent.append(item)
 
@@ -203,7 +204,7 @@ class UCSM_LOG_PARSE(object):
                 if serverMemPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0] != chassisPrevNum:
                     self.Server_Mem_Detail[serverMemPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]] = dict()
                 chassisPrevNum = serverMemPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[0]
-                serverPrevNum = serverMemPattern.match(item).group().split(':')[0].split(' ')[1].split('/')[1]
+                serverPrevNum = serverMemPattern.match(item).group().rstrip(':').split(' ')[1]
             elif item:
                 allContent.append(item)
 

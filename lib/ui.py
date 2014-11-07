@@ -103,14 +103,17 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         self.server_memory_detail(self.com_content['`show server memory detail`'])
 
         # Display Chassis Information
-        for chassis in range(1, self.chassis_count + 1):
-            Chassis_Name = 'Chassis %i' % chassis
+        #for chassis in range(1, self.chassis_count + 1):
+        loop = 0
+        for chassis in self.chassis_num:
+            loop += 1
+            Chassis_Name = 'Chassis %i' % int(chassis)
             cha = self.treestore.append(None, [Chassis_Name])
             self.Integrated_Info[Chassis_Name] = dict()
 
             # parse chassis inventory detail
             self.treestore.append(cha, ['Chassis Detail'])
-            self.Integrated_Info[Chassis_Name]['Chassis Detail'] = self.Chassis_Detail_Content[sorted(self.Chassis_Detail_Content.keys())[chassis - 1]]
+            self.Integrated_Info[Chassis_Name]['Chassis Detail'] = self.Chassis_Detail_Content[chassis]
 
             # parse FANS
             fan = self.treestore.append(cha, ['Fans'])
@@ -126,7 +129,7 @@ class UCSM_GUI(UCSM_LOG_PARSE):
                 iom_row = self.treestore.append(iom, [i])
                 self.Integrated_Info[Chassis_Name]['IO Modules'][i] = dict()
                 iom_status_row = self.treestore.append(iom_row, ['IOM Status'])
-                self.Integrated_Info[Chassis_Name]['IO Modules'][i]['IOM Status'] = self.Chassis_IOM_Detail[sorted(self.Chassis_IOM_Detail.keys())[chassis - 1]][i.split()[1]]
+                self.Integrated_Info[Chassis_Name]['IO Modules'][i]['IOM Status'] = self.Chassis_IOM_Detail[chassis][i.split()[1]]
                 iom_info_row = self.treestore.append(iom_row, ['IOM Info'])
                 self.Integrated_Info[Chassis_Name]['IO Modules'][i]['IOM Info'] = j 
 
@@ -140,28 +143,25 @@ class UCSM_GUI(UCSM_LOG_PARSE):
             # parse Servers
             server = self.treestore.append(cha, ['Servers'])
             self.Integrated_Info[Chassis_Name]['Servers'] = dict()
-            #for (i,j) in sorted(self.Chassis_Servers_Content[chassis].iteritems(), key=lambda d:d[0]):
-            for i in sorted(self.Server_Mem_Detail[sorted(self.Server_Mem_Detail.keys())[chassis - 1]].keys()):
-                i = "Server " + '/'.join(str(chassis)+i)
+            for i,j in sorted(self.Server_Mem_Detail[chassis].iteritems(), key = lambda d:d[0]):
                 server_row = self.treestore.append(server, [i])
                 self.Integrated_Info[Chassis_Name]['Servers'][i] = dict() 
                 # Server Inventory
                 server_inv_row = self.treestore.append(server_row, ["Server Inventory"])
-                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Inventory'] = self.Chassis_Server_Detail[sorted(self.Chassis_Server_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]] 
+                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Inventory'] = self.Chassis_Server_Detail[chassis][i]
 
                 # Server Memory Information
                 server_mem_row = self.treestore.append(server_row, ["Memory Info"])
-                self.Integrated_Info[Chassis_Name]['Servers'][i]['Memory Info'] = self.Server_Mem_Detail[sorted(self.Server_Mem_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]] 
+                #self.Integrated_Info[Chassis_Name]['Servers'][i]['Memory Info'] = self.Server_Mem_Detail[chassis][i]
+                self.Integrated_Info[Chassis_Name]['Servers'][i]['Memory Info'] = j
 
                 # Server Status
                 server_sts_row = self.treestore.append(server_row, ["Server Status"])
-                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Status'] = self.Server_Status_Detail[sorted(self.Server_Status_Detail.keys())[chassis - 1]][i.split(' ')[1].split('/')[1]] 
-                #    self.treestore.append(server_sts_row, [x])
+                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Status'] = self.Server_Status_Detail[chassis][i]
 
                 # Server Information
                 server_info_row = self.treestore.append(server_row, ['Server Info'])
-                #self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Info'] = j
-                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Info'] = self.Chassis_Servers_Content[chassis][i] 
+                self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Info'] = self.Chassis_Servers_Content[chassis][i]
 
         fi = self.treestore.append(None, ['Fabric Interconnects'])
         self.Integrated_Info['Fabric Interconnects'] = dict()
