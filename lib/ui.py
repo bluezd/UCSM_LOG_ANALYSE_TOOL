@@ -6,7 +6,7 @@ import gobject
 import pango
 pygtk.require('2.0')
 import gtk
-from lib.ucsm_log_parse import UCSM_LOG_PARSE, ucsm_get_data
+from ucsm_log_parse import UCSM_LOG_PARSE, ucsm_get_data
 
 class UCSM_GUI(UCSM_LOG_PARSE):
     # close the window and quit
@@ -18,6 +18,8 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         #UCSM_LOG_PARSE.__init__(self)
         super(UCSM_GUI, self).__init__()
         self.com_content = com_content
+        self.info_tab = ['_Equipment','_Event Log', '_Error Log']
+        self.tree_store = dict()
 
         # Create a new window
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -28,19 +30,24 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         self.hpaned = gtk.HPaned()
         self.window.add(self.hpaned)
 
-        self.scrolled_window1 = gtk.ScrolledWindow()
-        self.scrolled_window1.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.scrolled_window1.set_shadow_type(gtk.SHADOW_IN)
-        self.hpaned.add(self.scrolled_window1)
-
-        self.treeview = self.__create_treeview()
-        self.scrolled_window1.add(self.treeview)
-        
         self.notebook = gtk.Notebook()
+        for tab in self.info_tab:
+            scrolled_window = gtk.ScrolledWindow()
+            scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+            scrolled_window.set_shadow_type(gtk.SHADOW_IN)
+
+            self._new_notebook_page(self.notebook, scrolled_window, tab)
+
+            treeview = self.__create_treeview(tab)
+            scrolled_window.add(treeview)
+
         self.hpaned.add(self.notebook)
+
+        self.notebook1 = gtk.Notebook()
+        self.hpaned.add(self.notebook1)
         
         self.scrolled_window2, self.info_buffer = self.__create_text(False)
-        self._new_notebook_page(self.scrolled_window2, '_Info')
+        self._new_notebook_page(self.notebook1, self.scrolled_window2, '_Info')
         #self.tag = self.info_buffer.create_tag('title')
         #self.tag.set_property('font', 'Sans 18')
 
@@ -67,14 +74,15 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         #self.scrolledwindow = gtk.ScrolledWindow()
         #self.scrolledwindow.add(self.treeview)
         #self.window.add(self.scrolledwindow)
-        self.__parse_data()
+        self.__parse_data(self.tree_store['_Equipment'])
+        self.__parse_event_log(self.tree_store['_Event Log'])
 
         self.window.show_all()
 
-    def _new_notebook_page(self, widget, label):
+    def _new_notebook_page(self, notebook, widget, label):
         l = gtk.Label('')
         l.set_text_with_mnemonic(label)
-        self.notebook.append_page(widget, l)
+        notebook.append_page(widget, l)
 
     def __create_text(self, is_source=False):
         scrolled_window = gtk.ScrolledWindow()
@@ -93,7 +101,12 @@ class UCSM_GUI(UCSM_LOG_PARSE):
 
         return scrolled_window, self.buffer
 
-    def __parse_data(self):
+    def __parse_event_log(self, treestore):
+        self.event_information(com_content['`show event detail`'])
+        for time_stamp in sorted(self.Event_Detail.keys()):
+            treestore.append(None, [time_stamp])
+
+    def __parse_data(self, treestore):
         """docstring for self.__parse_data"""
         self.chassis_inventory_expand(self.com_content['`show chassis inventory expand`'])
         self.chassis_inventory_detail(self.com_content['`show chassis inventory detail`'])
@@ -108,102 +121,125 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         for chassis in self.chassis_num:
             loop += 1
             Chassis_Name = 'Chassis %i' % int(chassis)
-            cha = self.treestore.append(None, [Chassis_Name])
+            cha = treestore.append(None, [Chassis_Name])
             self.Integrated_Info[Chassis_Name] = dict()
 
             # parse chassis inventory detail
-            self.treestore.append(cha, ['Chassis Detail'])
+            treestore.append(cha, ['Chassis Detail'])
             self.Integrated_Info[Chassis_Name]['Chassis Detail'] = self.Chassis_Detail_Content[chassis]
 
             # parse FANS
-            fan = self.treestore.append(cha, ['Fans'])
+            fan = treestore.append(cha, ['Fans'])
             self.Integrated_Info[Chassis_Name]['Fans'] = dict()
             for (i,j) in sorted(self.Chassis_FAN_Content[chassis].iteritems(), key=lambda d:d[0]):
-                fan_row = self.treestore.append(fan, [i])
+                fan_row = treestore.append(fan, [i])
                 self.Integrated_Info[Chassis_Name]['Fans'][i] = j
 
             # parse IOM
-            iom = self.treestore.append(cha, ['IO Modules'])
+            iom = treestore.append(cha, ['IO Modules'])
             self.Integrated_Info[Chassis_Name]['IO Modules'] = dict()
             for (i,j) in sorted(self.Chassis_IOM_Content[chassis].iteritems(), key=lambda d:d[0]):
-                iom_row = self.treestore.append(iom, [i])
+                iom_row = treestore.append(iom, [i])
                 self.Integrated_Info[Chassis_Name]['IO Modules'][i] = dict()
-                iom_status_row = self.treestore.append(iom_row, ['IOM Status'])
+                iom_status_row = treestore.append(iom_row, ['IOM Status'])
                 self.Integrated_Info[Chassis_Name]['IO Modules'][i]['IOM Status'] = self.Chassis_IOM_Detail[chassis][i.split()[1]]
-                iom_info_row = self.treestore.append(iom_row, ['IOM Info'])
+                iom_info_row = treestore.append(iom_row, ['IOM Info'])
                 self.Integrated_Info[Chassis_Name]['IO Modules'][i]['IOM Info'] = j 
 
             # parse PSUs
-            psu = self.treestore.append(cha, ['PSUs'])
+            psu = treestore.append(cha, ['PSUs'])
             self.Integrated_Info[Chassis_Name]['PSUs'] = dict()
             for (i,j) in sorted(self.Chassis_PSU_Content[chassis].iteritems(), key=lambda d:d[0]):
-                psu_row = self.treestore.append(psu, [i])
+                psu_row = treestore.append(psu, [i])
                 self.Integrated_Info[Chassis_Name]['PSUs'][i] = j
 
             # parse Servers
-            server = self.treestore.append(cha, ['Servers'])
+            server = treestore.append(cha, ['Servers'])
             self.Integrated_Info[Chassis_Name]['Servers'] = dict()
             for i,j in sorted(self.Server_Mem_Detail[chassis].iteritems(), key = lambda d:d[0]):
-                server_row = self.treestore.append(server, [i])
+                server_row = treestore.append(server, [i])
                 self.Integrated_Info[Chassis_Name]['Servers'][i] = dict() 
                 # Server Inventory
-                server_inv_row = self.treestore.append(server_row, ["Server Inventory"])
+                server_inv_row = treestore.append(server_row, ["Server Inventory"])
                 self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Inventory'] = self.Chassis_Server_Detail[chassis][i]
 
                 # Server Memory Information
-                server_mem_row = self.treestore.append(server_row, ["Memory Info"])
+                server_mem_row = treestore.append(server_row, ["Memory Info"])
                 #self.Integrated_Info[Chassis_Name]['Servers'][i]['Memory Info'] = self.Server_Mem_Detail[chassis][i]
                 self.Integrated_Info[Chassis_Name]['Servers'][i]['Memory Info'] = j
 
                 # Server Status
-                server_sts_row = self.treestore.append(server_row, ["Server Status"])
+                server_sts_row = treestore.append(server_row, ["Server Status"])
                 self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Status'] = self.Server_Status_Detail[chassis][i]
 
                 # Server Information
-                server_info_row = self.treestore.append(server_row, ['Server Info'])
+                server_info_row = treestore.append(server_row, ['Server Info'])
                 self.Integrated_Info[Chassis_Name]['Servers'][i]['Server Info'] = self.Chassis_Servers_Content[chassis][i]
 
-        fi = self.treestore.append(None, ['Fabric Interconnects'])
+        fi = treestore.append(None, ['Fabric Interconnects'])
         self.Integrated_Info['Fabric Interconnects'] = dict()
         # Display Fabric Interconnect Information
         self.fi_inventory_expand(self.com_content['`show fabric-interconnect inventory expand`'])
         for i in sorted(self.FI_Inventory_Info.keys()):
             FI_NAME = 'Fabric Interconnect %s' % i
-            fi_row = self.treestore.append(fi, [FI_NAME])
+            fi_row = treestore.append(fi, [FI_NAME])
             self.Integrated_Info['Fabric Interconnects'][FI_NAME] = dict()
 
             for j,h in self.FI_Inventory_Info[i].iteritems():
                 # Fabric Card
-                child_row = self.treestore.append(fi_row, [j])
+                child_row = treestore.append(fi_row, [j])
                 self.Integrated_Info['Fabric Interconnects'][FI_NAME][j] = h 
                 
-    def __create_treeview(self):
+    def __create_treeview(self, tab_name):
         """docstring for __create_treeview"""
-        self.treestore = gtk.TreeStore(str)
-        self.treeview = gtk.TreeView(self.treestore)
-        self.selection = self.treeview.get_selection()
-        self.selection.set_mode(gtk.SELECTION_BROWSE)
-        self.treeview.set_size_request(200, -1)
+        treestore = gtk.TreeStore(str)
+        self.tree_store[tab_name] = treestore
+        treeview = gtk.TreeView(treestore)
+        selection = treeview.get_selection()
+        selection.set_mode(gtk.SELECTION_BROWSE)
+        treeview.set_size_request(200, -1)
 
-        self.column = gtk.TreeViewColumn("Cisco UCS Equipment")
+        column = gtk.TreeViewColumn("Cisco UCS Equipment")
 
-        self.treeview.append_column(self.column)
+        treeview.append_column(column)
 
-        self.cell = gtk.CellRendererText()
-        self.cell.set_property('style', pango.STYLE_ITALIC)
+        cell = gtk.CellRendererText()
+        cell.set_property('style', pango.STYLE_ITALIC)
 
         # add the cell to the tvcolumn and allow it to expand
-        self.column.pack_start(self.cell, True)
+        column.pack_start(cell, True)
+        column.add_attribute(cell, 'text', 0)
 
-        self.column.add_attribute(self.cell, 'text', 0)
+        if tab_name == "_Equipment":
+            selection.connect('changed', self.selection_changed_equipment)
+        elif tab_name == "_Event Log":
+            selection.connect('changed', self.selection_changed_event)
+        elif tab_name == "_Error Log":
+            selection.connect('changed', self.selection_changed_error)
 
-        self.selection.connect('changed', self.selection_changed_cb)
+        treeview.expand_all()
 
-        self.treeview.expand_all()
+        return treeview
 
-        return self.treeview
+    def selection_changed_error(self, selection):
+        self.clear_buffers()
+        model, iter = selection.get_selected()
+        if not iter or model.iter_has_child(iter):
+            return False
 
-    def selection_changed_cb(self, selection):
+        name = model.get_value(iter, 0)
+        print name
+
+    def selection_changed_event(self, selection):
+        self.clear_buffers()
+        model, iter = selection.get_selected()
+        if not iter or model.iter_has_child(iter):
+            return False
+
+        name = model.get_value(iter, 0)
+        self.insert_data(self.Event_Detail[name])
+
+    def selection_changed_equipment(self, selection):
         # model treeStore
         # iter treeIter 
         self.clear_buffers()

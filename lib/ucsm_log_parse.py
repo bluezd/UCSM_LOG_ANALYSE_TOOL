@@ -21,6 +21,7 @@ class UCSM_LOG_PARSE(object):
         self.Server_Status_Detail = dict()
         self.Server_Mem_Detail = dict()
         self.FI_Inventory_Info = dict()
+        self.Event_Detail = dict()
         self.Integrated_Info = dict()
 
     def chassis_inventory_expand(self, chassis_inv_list):
@@ -241,7 +242,24 @@ class UCSM_LOG_PARSE(object):
             fiPrevNum = ""
             contentPrevNum = ""
 
-def ucsm_get_data(path = "logs/sam_techsupportinfo"):
+    def event_information(self, event_info):
+        """docstring for event_information"""
+        allContent = list()
+        prev_time_stamp = ""
+        for line in event_info:
+            if line.find("Creation Time") != -1:
+                if allContent:
+                    self.Event_Detail[prev_time_stamp] = allContent
+                time_stamp = line.split(" ")[2]
+                prev_time_stamp = time_stamp
+                allContent = list()
+            elif prev_time_stamp:
+                allContent.append(line)
+
+        if prev_time_stamp and allContent:
+            self.Event_Detail[prev_time_stamp] = allContent
+
+def ucsm_get_data(path = "../logs/sam_techsupportinfo"):
     """docstring for ucsm_get_data"""
     pattern1 = re.compile('`.*`')
     pattern2 = re.compile('^`scope .*`')
