@@ -76,6 +76,7 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         #self.window.add(self.scrolledwindow)
         self.__parse_data(self.tree_store['_Equipment'])
         self.__parse_event_log(self.tree_store['_Event Log'])
+        self.__parse_error_log(self.tree_store['_Error Log'])
 
         self.window.show_all()
 
@@ -100,6 +101,13 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         self.text_view.set_wrap_mode(not is_source)
 
         return scrolled_window, self.buffer
+
+    def __parse_error_log(self, treestore):
+        self.error_information(com_content['`show fault detail`'])
+        for priority in self.Fault_Detail.keys():
+            p = treestore.append(None, [priority])
+            for id_num in sorted(self.Fault_Detail[priority].keys()):
+                treestore.append(p, [id_num])
 
     def __parse_event_log(self, treestore):
         self.event_information(com_content['`show event detail`'])
@@ -199,7 +207,7 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         selection.set_mode(gtk.SELECTION_BROWSE)
         treeview.set_size_request(200, -1)
 
-        column = gtk.TreeViewColumn("Cisco UCS Equipment")
+        column = gtk.TreeViewColumn(tab_name)
 
         treeview.append_column(column)
 
@@ -228,7 +236,9 @@ class UCSM_GUI(UCSM_LOG_PARSE):
             return False
 
         name = model.get_value(iter, 0)
-        print name
+        parent_iter = model.iter_parent(iter)
+        parent_name = model.get_value(parent_iter, 0)
+        self.insert_data(self.Fault_Detail[parent_name][name])
 
     def selection_changed_event(self, selection):
         self.clear_buffers()

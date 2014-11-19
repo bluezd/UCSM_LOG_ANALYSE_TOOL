@@ -22,6 +22,7 @@ class UCSM_LOG_PARSE(object):
         self.Server_Mem_Detail = dict()
         self.FI_Inventory_Info = dict()
         self.Event_Detail = dict()
+        self.Fault_Detail = dict()
         self.Integrated_Info = dict()
 
     def chassis_inventory_expand(self, chassis_inv_list):
@@ -258,6 +259,36 @@ class UCSM_LOG_PARSE(object):
 
         if prev_time_stamp and allContent:
             self.Event_Detail[prev_time_stamp] = allContent
+
+    def error_information(self, error_info):
+        """docstring for event_information"""
+        errorPattern = re.compile('^Severity:.*$')
+        IDPattern = re.compile('^ID: \d+$')
+        allContent = list()
+        level = ""
+        id_num = ""
+
+        for line in error_info:
+            if errorPattern.match(line):
+                if allContent:
+                    if time_stamp not in self.Fault_Detail[level]:
+                        self.Fault_Detail[level][time_stamp] = allContent
+                    else:
+                        self.Fault_Detail[level][time_stamp].extend(allContent)
+                level = line.split(":")[1].strip()
+                if level not in self.Fault_Detail:
+                    self.Fault_Detail[level] = dict()
+                allContent = list()
+            if line.find("Creation Time") != -1:
+                time_stamp = line.split(" ")[2]
+            if level:
+                allContent.append(line)
+
+        if time_stamp and allContent:
+            if time_stamp not in self.Fault_Detail[level]:
+                self.Fault_Detail[level][time_stamp] = allContent
+            else:
+                self.Fault_Detail[level][time_stamp].extend(allContent)
 
 def ucsm_get_data(path = "../logs/sam_techsupportinfo"):
     """docstring for ucsm_get_data"""
