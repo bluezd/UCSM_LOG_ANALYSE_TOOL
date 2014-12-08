@@ -24,6 +24,7 @@ class UCSM_LOG_PARSE(object):
         self.Event_Detail = dict()
         self.Fault_Detail = dict()
         self.Integrated_Info = dict()
+        self.System_Firmware = dict()
 
     def chassis_inventory_expand(self, chassis_inv_list):
         """docstring for chassis_inventory"""
@@ -289,6 +290,70 @@ class UCSM_LOG_PARSE(object):
                 self.Fault_Detail[level][time_stamp] = allContent
             else:
                 self.Fault_Detail[level][time_stamp].extend(allContent)
+
+    def system_firmware_detail(self, firmware_detail, chassis_firmware_detail):
+        """docstring for system_firmware_detial"""
+        firmwareName = re.compile('^\w+.*:$')
+        serverPattern = re.compile('^\s+Server \d+:$')
+        iomPattern = re.compile('^\s+IOM \d+.*:$')
+        allContent = list()
+        iomPrevNum = ""
+        prev = ""
+
+        for line in firmware_detail:
+            m1 = firmwareName.match(line)
+            if m1 and not self.RE_Chassis.match(line):
+                if prev:
+                    self.System_Firmware[prev] = allContent
+                    allContent = list()
+                prev = m1.group()[:-1]
+                self.System_Firmware[prev] = dict()
+            elif self.RE_Chassis.match(line):
+                if prev:
+                    self.System_Firmware[prev] = allContent
+                break
+            allContent.append(line)
+
+        if prev:
+            self.System_Firmware[prev] = allContent
+            allContent = list()
+            prev = ""
+
+        for line in chassis_firmware_detail:
+            if self.RE_Chassis.match(line):
+                if iomPrevNum:
+                    self.System_Firmware[chassis_number]["iom"][iomPrevNum] = allContent
+                    allContent = list()
+                    iomPrevNum = ""
+
+                chassis_number = filter(str.isdigit, line)
+                self.System_Firmware[chassis_number] = dict()
+                self.System_Firmware[chassis_number]["servers"] = dict()
+                self.System_Firmware[chassis_number]["iom"] = dict()
+                serverPrevNum = ""
+                iomPrevNum = ""
+            elif serverPattern.match(line):
+                if serverPrevNum:
+                    self.System_Firmware[chassis_number]["servers"][serverPrevNum] = allContent
+                    allContent = list()
+                serverPrevNum = filter(str.isdigit, line)
+            elif iomPattern.match(line):
+                if serverPrevNum:
+                    self.System_Firmware[chassis_number]["servers"][serverPrevNum] = allContent
+                    allContent = list()
+                    serverPrevNum = ""
+
+                if iomPrevNum:
+                    self.System_Firmware[chassis_number]["iom"][iomPrevNum] = allContent
+                    allContent = list()
+                iomPrevNum = filter(str.isdigit, line)
+            else:
+                allContent.append(line)
+
+        if iomPrevNum:
+            self.System_Firmware[chassis_number]["iom"][iomPrevNum] = allContent
+            allContent = list()
+            iomPrevNum = ""
 
 def ucsm_get_data(path = "../logs/sam_techsupportinfo"):
     """docstring for ucsm_get_data"""

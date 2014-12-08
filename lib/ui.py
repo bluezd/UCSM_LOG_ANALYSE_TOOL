@@ -59,21 +59,18 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         self.tag = self.info_buffer.create_tag('bad', foreground='#7F007F',
             style=pango.STYLE_ITALIC)
 
-        #scrolled_window, self.info_buffer = self.__create_text(True)
-        #self._new_notebook_page(scrolled_window, '_Source')
-        #tag = self.info_buffer.create_tag('source')
-        #tag.set_property('font', 'monospace')
-        #tag.set_property('pixels_above_lines', 0)
-        #tag.set_property('pixels_below_lines', 0)
-        #tag = self.info_buffer.create_tag('keyword', foreground='#00007F',
-        #    weight=pango.WEIGHT_BOLD)
-        #tag = self.info_buffer.create_tag('string', foreground='#7F007F')
-        #tag = self.info_buffer.create_tag('comment', foreground='#007F00',
-        #    style=pango.STYLE_ITALIC)
+        scrolled_window, self.firmware_buffer = self.__create_text(True)
+        self._new_notebook_page(self.notebook1, scrolled_window, '_Firmware')
+        tag = self.info_buffer.create_tag('source')
+        tag.set_property('font', 'monospace')
+        tag.set_property('pixels_above_lines', 0)
+        tag.set_property('pixels_below_lines', 0)
+        tag = self.info_buffer.create_tag('keyword', foreground='#00007F',
+            weight=pango.WEIGHT_BOLD)
+        tag = self.info_buffer.create_tag('string', foreground='#7F007F')
+        tag = self.info_buffer.create_tag('comment', foreground='#007F00',
+            style=pango.STYLE_ITALIC)
 
-        #self.scrolledwindow = gtk.ScrolledWindow()
-        #self.scrolledwindow.add(self.treeview)
-        #self.window.add(self.scrolledwindow)
         self.__parse_data(self.tree_store['_Equipment'])
         self.__parse_event_log(self.tree_store['_Event Log'])
         self.__parse_error_log(self.tree_store['_Error Log'])
@@ -122,6 +119,10 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         self.server_inventory_expand(self.com_content['`show server inventory expand`'])
         self.server_status_detail(self.com_content['`show server status detail`'])
         self.server_memory_detail(self.com_content['`show server memory detail`'])
+        # system firmware detail
+        #self.system_firmware_detail(self.com_content['`show system firmware expand detail`'],
+        self.system_firmware_detail(self.com_content['`scope eth-storage`']['`show system firmware expand`'],
+                self.com_content['`scope eth-storage`']['`show chassis firmware detail`'])
 
         # Display Chassis Information
         #for chassis in range(1, self.chassis_count + 1):
@@ -249,14 +250,8 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         name = model.get_value(iter, 0)
         self.insert_data(self.Event_Detail[name])
 
-    def selection_changed_equipment(self, selection):
-        # model treeStore
-        # iter treeIter 
-        self.clear_buffers()
-        model, iter = selection.get_selected()
-        if not iter or model.iter_has_child(iter):
-            return False
-
+    def insert_information(self, model, iter):
+        """docstring for insert_information"""
         parent_list = list()
         parent_count = 0
         tmp_iter = iter
@@ -279,6 +274,50 @@ class UCSM_GUI(UCSM_LOG_PARSE):
             self.insert_data(self.Integrated_Info[parent_list[0]][parent_list[1]][name])
         elif parent_count == 3:
             self.insert_data(self.Integrated_Info[parent_list[0]][parent_list[1]][parent_list[2]][name])
+
+    def insert_firmware(self, model, iter):
+        """docstring for insert_firmware"""
+        chassis_name = ""
+        server_name = ""
+        iomPattern = re.compile('^IOCard \d+$')
+
+        buffer = self.firmware_buffer
+        iter_buffer = buffer.get_iter_at_offset(0)
+        iter_parent = model.iter_parent(iter)
+        y = lambda x:model.iter_parent(x)
+
+        #print model.get_value(iter_parent, 0)
+        try:
+            # parse servers
+            if model.get_value(model.iter_parent(iter_parent), 0) == "Servers":
+                name = model.get_value(iter_parent, 0)
+                chassis_name = name.split("/")[0]
+                server_name = name.split("/")[1]
+            if chassis_name and server_name:
+                for line in self.System_Firmware[chassis_name]["servers"][server_name]:
+                    buffer.insert(iter_buffer, line)
+                    buffer.insert(iter_buffer, '\n')
+
+            # parse ioms
+            iomName = model.get_value(iter_parent, 0)
+            chassis_name = model.get_value(y(y(iter_parent)), 0).split(' ')[1]
+            if iomPattern.match(iomName):
+                for line in self.System_Firmware[chassis_name]["iom"][filter(str.isdigit, iomName)]:
+                    buffer.insert(iter_buffer, line)
+                    buffer.insert(iter_buffer, '\n')
+        except Exception, e:
+            pass
+
+    def selection_changed_equipment(self, selection):
+        # model treeStore
+        # iter treeIter
+        self.clear_buffers()
+        model, iter = selection.get_selected()
+        if not iter or model.iter_has_child(iter):
+            return False
+
+        self.insert_information(model, iter)
+        self.insert_firmware(model, iter)
 
     def insert_data(self, lines):
         buffer = self.info_buffer
@@ -306,6 +345,9 @@ class UCSM_GUI(UCSM_LOG_PARSE):
     def clear_buffers(self):
         start, end = self.info_buffer.get_bounds()
         self.info_buffer.delete(start, end)
+
+        start, end = self.firmware_buffer.get_bounds()
+        self.firmware_buffer.delete(start, end)
 
     def run(self):
         gtk.main()
