@@ -103,12 +103,12 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         self.error_information(self.com_content['`show fault detail`'])
         for priority in self.Fault_Detail.keys():
             p = treestore.append(None, [priority])
-            for id_num in sorted(self.Fault_Detail[priority].keys()):
+            for id_num in sorted(self.Fault_Detail[priority].keys(), reverse=True):
                 treestore.append(p, [id_num])
 
     def __parse_event_log(self, treestore):
         self.event_information(self.com_content['`show event detail`'])
-        for time_stamp in sorted(self.Event_Detail.keys()):
+        for time_stamp in sorted(self.Event_Detail.keys(), reverse=True):
             treestore.append(None, [time_stamp])
 
     def __parse_data(self, treestore):
