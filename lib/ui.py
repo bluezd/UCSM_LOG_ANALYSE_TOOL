@@ -121,8 +121,11 @@ class UCSM_GUI(UCSM_LOG_PARSE):
         self.server_memory_detail(self.com_content['`show server memory detail`'])
         # system firmware detail
         #self.system_firmware_detail(self.com_content['`show system firmware expand detail`'],
-        self.system_firmware_detail(self.com_content['`scope eth-storage`']['`show system firmware expand`'],
-                self.com_content['`scope eth-storage`']['`show chassis firmware detail`'])
+        #self.system_firmware_detail(self.com_content['`scope eth-storage`']['`show system firmware expand`'],
+        #        self.com_content['`scope eth-storage`']['`show chassis firmware detail`'])
+
+        self.system_firmware_detail(self.com_content['`scope fc-storage`']['`show system firmware expand detail`'],
+                self.com_content['`scope fc-storage`']['`show chassis firmware detail`'])
 
         # Display Chassis Information
         #for chassis in range(1, self.chassis_count + 1):
